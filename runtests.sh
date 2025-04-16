@@ -9,18 +9,16 @@ echo -e " \n testing post endpoints \n"
 
 # Test POST /businesses
 
-response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+response=$(curl -X POST http://localhost:8086/businesses \
     -H "Content-Type: application/json" \
-    -d '{
-        "name": "Sudo Cafe",
-        "streetAddress": "789 Oak St",
-        "city": "Gotham",
-        "state": "NJ",
-        "zipCode": "07001",
-        "phoneNumber": "555-555-5555",
-        "category": "Cafe",
-        "subcategories": ["Coffee", "Bakery"]
-    }')
+    -d "{\"name\": \"Sudo Cafe\", \
+        \"streetAddress\": \"789 Oak St\", \
+        \"city\": \"Gotham\", \
+        \"state\": \"NJ\", \
+        \"zipCode\": \"07001\", \
+        \"phoneNumber\": \"555-555-5555\", \
+        \"category\": \"Cafe\", \
+        \"subcategories\": [\"Coffee\", \"Bakery\"]}")
 if [ "$response" -eq 201 ]; then
     echo "POST /businesses test passed"
 else
@@ -223,9 +221,50 @@ response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/
         "review": "Invalid rating!"
     }')
 if [ "$response" -eq 400 ]; then
-    echo "POST /businesses/2/reviews with invalid data test passed"
+    echo "POST /businesses/2/reviews with invalid data test passed greater than 5 star rating"
 else
-    echo "POST /businesses/2/reviews with invalid data test failed"
+    echo "POST /businesses/2/reviews with invalid data test failed greater than 5 star rating"
+fi
+
+# Test POST /businesses/2/reviews with invalid data less than 1 for 
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses/2/reviews \
+    -H "Content-Type: application/json" \
+    -d '{
+        "starRating": 0,
+        "dollarRating": 3,
+        "review": "Invalid rating!"
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses/2/reviews with invalid data test passed less than 0 for star rating"
+else
+    echo "POST /businesses/2/reviews with invalid data test failed less than 0 for star rating"
+fi
+
+# Test POST /businesses/2/reviews with invalid dollar rating over 4
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses/2/reviews \
+    -H "Content-Type: application/json" \
+    -d '{
+        "starRating": 3,
+        "dollarRating": 7,
+        "review": "Invalid rating!"
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses/2/reviews with invalid data test passed greater than 4 for dollar rating"
+else
+    echo "POST /businesses/2/reviews with invalid data test failed greater than 4 for dollar rating"
+fi
+# Test POST /businesses/2/reviews with invalid dollar rating over 4
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses/2/reviews \
+    -H "Content-Type: application/json" \
+    -d '{
+        "starRating": 3,
+        "dollarRating": 0,
+        "review": "Invalid rating!"
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses/2/reviews with invalid data test passed dollar rating less than 1"
+else
+    echo "POST /businesses/2/reviews with invalid data test failed  dollar rating less than 1"
 fi
 # Test POST /businesses/2/photos with no URL
 response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses/2/photos \
@@ -239,11 +278,12 @@ fi
 echo "there are more tests to be added in this section"
 
 echo -e " \n testing put fail cases \n"
-# Test PUT /businesses/2 with invalid data
-response=$(curl -s -o /dev/null -w "%{http_code}" -X PUT http://localhost:8086/businesses/2 \
+
+# Test POST /businesses with invalid data
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
     -H "Content-Type: application/json" \
     -d '{
-        "name": "",
+ 
         "streetAddress": "123 Updated St",
         "city": "Metropolis",
         "state": "NY",
@@ -253,9 +293,157 @@ response=$(curl -s -o /dev/null -w "%{http_code}" -X PUT http://localhost:8086/b
         "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
     }')
 if [ "$response" -eq 400 ]; then
-    echo "PUT /businesses/2 with invalid data test passed"
+    echo "POST /businesses with invalid data test success: missing name"
 else
-    echo "PUT /businesses/2 with invalid data test failed"
+    echo "POST /businesses with invalid data test failure: missing name"
+fi
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "",
+        "city": "Metropolis",
+        "state": "NY",
+        "zipCode": "10001",
+        "phoneNumber": "555-555-1234",
+        "category": "Updated Category",
+        "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses with invalid data test success: missing street address"
+else
+    echo "POST /businesses with invalid data test failure: missing street address"
+fi
+
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "123 Updated St",
+    
+        "state": "NY",
+        "zipCode": "10001",
+        "phoneNumber": "555-555-1234",
+        "category": "Updated Category",
+        "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses with invalid data test success: missing city"
+else
+    echo "POST /businesses with invalid data test failure: missing city"
+fi
+
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "123 Updated St",
+        "city": "Metropolis",
+        
+        "zipCode": "10001",
+        "phoneNumber": "555-555-1234",
+        "category": "Updated Category",
+        "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses with invalid data test success: missing state"
+else
+    echo "POST /businesses with invalid data test failure: missing state"
+fi
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "123 Updated St",
+        "city": "Metropolis",
+        "state": "NY",
+     
+        "phoneNumber": "555-555-1234",
+        "category": "Updated Category",
+        "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses with invalid data test success: missing zip code"
+else
+    echo "POST /businesses with invalid data test failure: missing zip code"
+fi
+
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "123 Updated St",
+        "city": "Metropolis",
+        "state": "NY",
+        "zipCode": "10001",
+      
+        "category": "Updated Category",
+        "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses with invalid data test success: missing phone number"
+else
+    echo "POST /businesses with invalid data test failure: missing phone number"
+fi
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "123 Updated St",
+        "city": "Metropolis",
+        "state": "NY",
+        "zipCode": "10001",
+        "phoneNumber": "555-555-1234",
+   
+        "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses with invalid data test success: missing category"
+else
+    echo "POST /businesses with invalid data test failure: missing category"
+fi
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "123 Updated St",
+        "city": "Metropolis",
+        "state": "NY",
+        "zipCode": "10001",
+        "phoneNumber": "555-555-1234",
+        "category": "Updated Category",
+       
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "POST /businesses with invalid data test success: missing subcategories"
+else
+    echo "POST /businesses with invalid data test failure: missing subcategories"
+fi
+
+
+
+response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8086/businesses \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "taco bell",
+        "streetAddress": "123 Updated St",
+        "city": "",
+        "state": "NY",
+        "zipCode": "10001",
+        "phoneNumber": "555-555-1234",
+        "category": "Updated Category",
+        "subcategories": ["Updated Subcategory1", "Updated Subcategory2"]
+    }')
+if [ "$response" -eq 400 ]; then
+    echo "PUT /businesses/2 with invalid data test passed missing city"
+else
+    echo "PUT /businesses/2 with invalid data test failed missing city"
 fi
 
 # Test PUT /businesses/2/reviews/1 with invalid data
@@ -301,10 +489,4 @@ if [ "$response" -eq 404 ]; then
 else
     echo "DELETE /businesses/2/photos/999 test failed"
 fi
-# Test DELETE /businesses/2/reviews/1 (non-existent review)
-response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE http://localhost:8086/businesses/2/reviews/1)
-if [ "$response" -eq 404 ]; then
-    echo "DELETE /businesses/2/reviews/1 test passed"
-else
-    echo "DELETE /businesses/2/reviews/1 test failed"
-fi
+
